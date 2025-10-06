@@ -1,0 +1,32 @@
+Source: wispr-lite
+Section: utils
+Priority: optional
+Maintainer: Wispr-Lite Contributors <noreply@example.com>
+Build-Depends: debhelper (>= 11),
+               dh-python,
+               dh-virtualenv,
+               python3-all (>= 3.10),
+               python3-venv,
+               python3-setuptools,
+               pybuild-plugin-pyproject
+Standards-Version: 4.5.0
+Homepage: https://github.com/wispr-lite/wispr-lite
+
+Package: wispr-lite
+Architecture: all
+Depends: ${misc:Depends},
+         python3 (>= 3.10),
+         python3-gi,
+         gir1.2-gtk-3.0,
+         gir1.2-ayatanaappindicator3-0.1 | gir1.2-appindicator3-0.1,
+         gir1.2-notify-0.7,
+         libnotify4,
+         xclip,
+         libportaudio2
+Description: Local voice dictation and command launcher
+ Wispr-Lite provides fast, local voice dictation using Whisper AI.
+ Features include push-to-talk recording, real-time transcription,
+ text insertion without focus stealing, and optional command mode
+ for voice-activated system commands.
+ .
+ All processing happens locally with no cloud dependencies.

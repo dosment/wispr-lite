@@ -1,0 +1,10 @@
+#!/bin/sh
+# Wrapper to launch Wispr-Lite from the private virtualenv created by dh-virtualenv
+VENV_DIR="/opt/venvs/wispr-lite"
+if [ -x "$VENV_DIR/bin/wispr-lite" ]; then
+    exec "$VENV_DIR/bin/wispr-lite" "$@"
+else
+    echo "wispr-lite virtualenv not found at $VENV_DIR" 1>&2
+    exit 1
+fi
+

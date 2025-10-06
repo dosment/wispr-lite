@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Wispr-Lite
+GenericName=Voice Dictation
+Comment=Local voice dictation and command launcher
+Exec=wispr-lite
+Icon=wispr-lite
+Terminal=false
+Categories=Utility;Accessibility;Audio;
+Keywords=voice;dictation;speech;transcription;
+StartupNotify=false
+X-GNOME-Autostart-enabled=true

@@ -1,0 +1,10 @@
+# Requirements for user installation
+# System packages (install via apt): python3-gi, python3-dbus, python3-cairo
+
+faster-whisper==1.0.3
+sounddevice==0.4.7
+webrtcvad==2.0.10
+pynput==1.7.7
+python-xlib==0.33
+PyYAML==6.0.1
+numpy>=1.26.0

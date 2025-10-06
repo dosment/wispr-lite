@@ -1,0 +1,3 @@
+wispr-lite.desktop usr/share/applications
+scripts/preload_models.sh usr/share/wispr-lite
+debian/wispr-lite-wrapper usr/bin/wispr-lite

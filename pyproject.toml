@@ -1,0 +1,75 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wispr-lite"
+version = "0.1.0"
+description = "Wispr Flow-style voice dictation and command launcher for Linux Mint Cinnamon"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Wispr-Lite Contributors"}
+]
+keywords = ["voice", "dictation", "speech-recognition", "whisper", "linux"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
+
+dependencies = [
+    "faster-whisper==1.0.3",
+    "sounddevice==0.4.7",
+    "webrtcvad==2.0.10",
+    # PyGObject - use system package (python3-gi)
+    # dbus-python - use system package (python3-dbus)
+    "pynput==1.7.7",
+    "python-xlib==0.33",
+    "PyYAML==6.0.1",
+    "numpy>=1.26.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.0.0",
+    "pytest-cov==4.1.0",
+    "mypy==1.8.0",
+    "black==24.1.1",
+    "flake8==7.0.0",
+]
+
+[project.scripts]
+wispr-lite = "wispr_lite.main:main"
+
+[project.urls]
+Homepage = "https://github.com/wispr-lite/wispr-lite"
+Issues = "https://github.com/wispr-lite/wispr-lite/issues"
+
+[tool.setuptools]
+packages = ["wispr_lite", "wispr_lite.ui", "wispr_lite.audio", "wispr_lite.asr", "wispr_lite.integration", "wispr_lite.integration.typing", "wispr_lite.commands", "wispr_lite.config"]
+
+[tool.setuptools.package-data]
+wispr_lite = ["config/*.yaml"]
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

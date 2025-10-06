@@ -1,0 +1,68 @@
+# Default configuration for Wispr-Lite
+# This file is used as a reference. User config is stored at ~/.config/wispr-lite/config.yaml
+
+hotkeys:
+  push_to_talk: "ctrl+space"
+  toggle: "ctrl+shift+space"
+  command_mode: ""
+  undo_last: "ctrl+shift+z"
+
+audio:
+  device: null  # null = system default
+  sample_rate: 16000
+  channels: 1
+  frame_duration_ms: 20
+  vad_mode: 3  # webrtcvad aggressiveness (0-3, 3 = most aggressive)
+  vad_silence_timeout_ms: 1000
+
+asr:
+  backend: "faster-whisper"
+  model_size: "base"  # tiny, base, small, medium, large
+  language: null  # null = auto-detect
+  compute_type: "auto"  # auto, int8, float16
+  device: "auto"  # auto, cpu, cuda
+  beam_size: 5
+  best_of: 5
+
+typing:
+  strategy: "clipboard"  # clipboard or xtest
+  preserve_clipboard: true
+  typing_delay_ms: 10
+  smart_spacing: true
+  smart_capitalization: true
+
+notifications:
+  enabled: true
+  respect_dnd: true
+  show_info: false
+  show_warnings: true
+  show_errors: true
+  show_progress: true
+  max_toasts_per_minute: 3
+  per_category_cooldown_sec: 10
+  enable_sounds: false
+  sound_volume: 0.5
+
+ui:
+  show_overlay: true
+  overlay_transparency: 0.9
+  theme: "auto"  # auto, light, dark
+
+commands:
+  enabled: true
+  prefix: "cmd:"
+  require_confirmation: true
+  commands:
+    "open terminal":
+      action: "launch"
+      target: "gnome-terminal"
+    "open browser":
+      action: "launch"
+      target: "firefox"
+    "search":
+      action: "url"
+      target: "https://www.google.com/search?q={query}"
+
+mode: "dictation"  # dictation or command
+autostart: false
+log_level: "INFO"

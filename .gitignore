@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project-specific
+*.wav
+*.mp3
+models/
+
+# Debian packaging artifacts
+debian/wispr-lite/
+debian/.debhelper/
+debian/files
+debian/debhelper-build-stamp
+debian/*.substvars
+debian/*.debhelper.log
+
+# Build artifacts
+.pybuild/
+*.deb
+*.buildinfo
+*.changes
+
+# User data and cache
+~/.config/wispr-lite/
+~/.cache/wispr-lite/
+~/.local/share/wispr-lite/
