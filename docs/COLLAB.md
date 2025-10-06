@@ -218,6 +218,15 @@ Working Agreement
 ## Implementation Updates (Claude)
 Append new entries at the top. Keep each entry ≤ 20 lines.
 
+- Date: 2025-10-06 (Repository Initialization & GitHub Push)
+- Area: Version Control/Release
+- Summary: Initialized git repository, committed all project files, and pushed to GitHub. Created comprehensive .gitignore to exclude build artifacts, user data, and virtual environments. Updated all documentation to reflect current feature set: corrected default hotkeys (Ctrl+Super), documented smart spacing/capitalization, added language dropdown UI documentation, updated model defaults (base). Repository now live at https://github.com/dosment/wispr-lite with 76 files committed (8110+ lines of code).
+- Files touched: .gitignore (added debian/build exclusions), README.md:73-79 (updated hotkeys), docs/CONFIG.md:92-98,115-117,127-145 (documented smart spacing/capitalization, language dropdown, hotkey examples), PROMPT.md:21,28 (updated hotkeys and model list), docs/PACKAGING.md:239-241,316 (updated QA checklist hotkeys).
+- Behavior change: None (documentation updates only). All code changes from previous sessions now committed to main branch.
+- Tests: Git repository initialized ✓, 76 files committed ✓, pushed to GitHub ✓, .gitignore properly excludes build artifacts ✓, documentation updated and accurate ✓.
+- Risks/Notes: Repository is public. All user-specific data (.config, .cache) properly excluded from version control. Debian build artifacts excluded to prevent bloat.
+- Follow-ups: None. v0.1.0 ready for public release. All features documented, tested, and version controlled.
+
 - Date: 2025-10-06 (Preferences & Transcription Quality Improvements)
 - Area: Bug Fixes/UX/Configuration
 - Summary: Fixed critical preferences bugs and improved transcription quality. (1) Model selection bug: ASR engine config wasn't updated when preferences changed, causing wrong model to load. Fixed by updating asr_engine.config and unloading old model when size changes. (2) Preferences window blank screen: GTK error from duplicate widget add. Fixed by removing duplicate self.add() call. (3) Language selection UX: replaced text entry with dropdown of 16 common languages plus "Auto-detect". (4) Question mark bug: XTest wasn't handling Shift modifier for shifted characters (?!@#$, etc.). Added shift detection and modifier key handling. (5) Smart capitalization: implemented auto-capitalization of first letter after sentence-ending punctuation (., !, ?). (6) Changed default model from "medium" back to "base" per user request.
