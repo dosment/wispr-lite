@@ -105,6 +105,9 @@ class HotkeyManager:
                     normalized_pressed.add(keyboard.Key.shift_l)
                 elif key in (keyboard.Key.alt_l, keyboard.Key.alt_r):
                     normalized_pressed.add(keyboard.Key.alt_l)
+                elif key == keyboard.Key.cmd or key == keyboard.Key.cmd_r:
+                    # Normalize Super/Windows/Command key variants
+                    normalized_pressed.add(keyboard.Key.cmd)
                 else:
                     normalized_pressed.add(key)
             else:
