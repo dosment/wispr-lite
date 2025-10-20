@@ -221,8 +221,216 @@ asr:
 
 Ensure CUDA and cuDNN are installed.
 
+## Configuration Recipes
+
+### High Accuracy Setup (Best Quality)
+
+For maximum transcription accuracy (requires more RAM and CPU):
+
+```yaml
+asr:
+  model_size: "medium"
+  language: "en"  # Set explicitly for better accuracy
+  beam_size: 5
+  best_of: 5
+
+audio:
+  vad_mode: 2  # Less aggressive (accepts more audio)
+  vad_silence_timeout_ms: 1500  # Wait longer before stopping
+
+typing:
+  smart_spacing: true
+  smart_capitalization: true
+```
+
+### Fast Performance Setup (Speed Priority)
+
+For minimal latency on older hardware:
+
+```yaml
+asr:
+  model_size: "tiny"
+  compute_type: "int8"
+  device: "cpu"
+
+audio:
+  vad_mode: 3  # Most aggressive (quick detection)
+  vad_silence_timeout_ms: 800  # Stop quickly
+
+typing:
+  strategy: "xtest"  # Faster than clipboard
+  typing_delay_ms: 5  # Minimum delay
+```
+
+### Privacy-Focused Setup
+
+Maximum privacy with minimal logging:
+
+```yaml
+mode: "dictation"
+log_level: "ERROR"  # Only log errors
+
+typing:
+  preserve_clipboard: false  # Don't access clipboard
+  smart_spacing: true
+  smart_capitalization: true
+
+notifications:
+  enabled: true
+  show_info: false  # Don't show info notifications
+  show_progress: false  # Don't show progress
+```
+
+### Multi-Language Setup
+
+For users who switch between languages:
+
+```yaml
+asr:
+  model_size: "small"  # Better for multi-language
+  language: null  # Auto-detect
+  beam_size: 5
+
+typing:
+  strategy: "clipboard"  # Better for non-ASCII
+  preserve_clipboard: true
+  smart_spacing: true
+  smart_capitalization: true
+```
+
+### Command-Heavy Workflow
+
+For users who primarily use voice commands:
+
+```yaml
+mode: "command"
+
+commands:
+  enabled: true
+  require_confirmation: false  # Skip confirmations for trusted commands
+  commands:
+    "open terminal":
+      action: "launch"
+      target: "gnome-terminal"
+    "open browser":
+      action: "launch"
+      target: "firefox"
+    "open files":
+      action: "launch"
+      target: "nemo"
+    "search":
+      action: "url"
+      target: "https://www.google.com/search?q={query}"
+    "youtube":
+      action: "url"
+      target: "https://youtube.com"
+    "volume up":
+      action: "shell"
+      target: "pactl set-sink-volume @DEFAULT_SINK@ +5%"
+    "volume down":
+      action: "shell"
+      target: "pactl set-sink-volume @DEFAULT_SINK@ -5%"
+    "mute":
+      action: "shell"
+      target: "pactl set-sink-mute @DEFAULT_SINK@ toggle"
+```
+
+### Laptop/Mobile Setup
+
+For use on laptops with limited resources:
+
+```yaml
+asr:
+  model_size: "base"
+  device: "cpu"
+  compute_type: "int8"
+
+audio:
+  vad_mode: 3
+  vad_silence_timeout_ms: 1000
+
+typing:
+  strategy: "clipboard"
+  smart_spacing: true
+  smart_capitalization: true
+
+notifications:
+  enabled: true
+  respect_dnd: true  # Important for battery life
+  max_toasts_per_minute: 2
+```
+
+## Troubleshooting Common Configurations
+
+### Hotkey Conflicts
+
+If your hotkeys conflict with system shortcuts:
+
+```yaml
+hotkeys:
+  push_to_talk: "ctrl+alt+space"  # Alternative
+  toggle: "ctrl+alt+shift+space"
+  undo_last: "ctrl+alt+z"
+```
+
+Or use Cinnamon custom shortcuts instead.
+
+### Audio Dropouts
+
+If you experience audio dropouts or missed speech:
+
+```yaml
+audio:
+  vad_mode: 1  # Less aggressive
+  vad_silence_timeout_ms: 2000  # Wait longer
+  frame_duration_ms: 30  # Larger frames (less CPU)
+```
+
+### Clipboard Issues
+
+If clipboard paste doesn't work reliably:
+
+```yaml
+typing:
+  strategy: "xtest"  # Try XTest instead
+  preserve_clipboard: false  # Disable if causing issues
+```
+
+### Performance Issues
+
+If transcription is slow or uses too much CPU:
+
+```yaml
+asr:
+  model_size: "tiny"  # Smallest, fastest model
+  compute_type: "int8"
+  device: "cpu"
+
+audio:
+  sample_rate: 16000  # Default, don't increase
+  channels: 1  # Mono only
+```
+
 ## Environment Variables
 
 - `XDG_CONFIG_HOME`: Config directory (default: `~/.config`)
 - `XDG_CACHE_HOME`: Model cache directory (default: `~/.cache`)
 - `XDG_STATE_HOME`: Log directory (default: `~/.local/state`)
+- `WISPR_LOG_LEVEL`: Override log level (DEBUG, INFO, WARNING, ERROR)
+
+Example:
+
+```bash
+WISPR_LOG_LEVEL=DEBUG wispr-lite
+```
+
+## Tips and Best Practices
+
+1. **Start with defaults**: The default configuration is optimized for most users
+2. **Model selection**: Use `base` for daily use, `small` for better accuracy, `tiny` for speed
+3. **Hotkey choice**: Avoid common shortcuts like Ctrl+Space (input methods) or Super+Space (launchers)
+4. **VAD sensitivity**: Mode 3 (default) works well; lower if it cuts off speech
+5. **Clipboard vs XTest**: Clipboard is safer and works everywhere; XTest is faster but may have compatibility issues
+6. **Smart features**: Keep smart_spacing and smart_capitalization enabled for better output
+7. **Notifications**: Respect DND to avoid interruptions during presentations/screen sharing
+8. **Backup config**: Keep a backup of your customized config.yaml

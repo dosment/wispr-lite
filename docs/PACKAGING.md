@@ -1,58 +1,68 @@
 # Packaging Guide for Wispr-Lite
 
-## Building .deb Package
+This guide covers building and distributing Wispr-Lite packages.
+
+## Table of Contents
+
+- [.deb Package](#deb-package)
+- [User-Level Installation](#user-level-installation)
+- [Model Preloading](#model-preloading)
+- [Icon Installation](#icon-installation)
+- [Dependencies](#dependencies)
+- [Version Management](#version-management)
+- [Flatpak (Future)](#flatpak-future)
+- [Troubleshooting](#troubleshooting)
+
+## .deb Package
 
 ### Prerequisites
 
-Install the build tools. This project uses dh‑virtualenv to bundle Python dependencies in a private virtualenv so end users don’t need pip:
+Install the build tools:
 
 ```bash
-sudo apt install dpkg-dev debhelper dh-python dh-virtualenv python3-all python3-venv python3-setuptools pybuild-plugin-pyproject
+sudo apt install dpkg-dev debhelper dh-python dh-virtualenv \
+    python3-all python3-venv python3-setuptools pybuild-plugin-pyproject
 ```
+
+**Note**: `dh-virtualenv` is required for building .deb packages with bundled Python dependencies.
 
 ### Build Steps
 
-The project uses a `Makefile` to simplify the build process. The resulting `.deb` includes an internal virtualenv; users only need `dpkg -i`.
-
-1.  **Ensure all required debian files exist:**
-    - `debian/changelog` - Package version history
-    - `debian/control` - Package metadata and dependencies
-    - `debian/compat` - Debhelper compatibility level (11)
-    - `debian/rules` - Build rules
-    - `debian/install` - File installation manifest
-
-2.  **Build the package:**
-    From the project root, simply run:
-    ```bash
-    make deb
-    ```
-
-This command will invoke `dpkg-buildpackage` with the correct flags and generate the `.deb` file in the parent directory (e.g., `../wispr-lite_1.0.0_all.deb`).
-
-### Verified on Linux Mint 22 (2025-10-05)
-
-**Build Test Results:**
-- ✓ Package builds successfully: `wispr-lite_1.0.0_all.deb` (42KB)
-- ✓ All icons installed to `/usr/share/icons/hicolor/scalable/apps/`:
-  - wispr-lite-idle.svg
-  - wispr-lite-listening.svg
-  - wispr-lite-processing.svg
-  - wispr-lite-muted.svg
-  - wispr-lite-error.svg
-  - wispr-lite.svg (alias for .desktop compatibility)
-- ✓ Executable installed: `/usr/bin/wispr-lite`
-- ✓ Desktop launcher: `/usr/share/applications/wispr-lite.desktop`
-- ✓ Documentation: README.md and CONFIG.md included
-- ✓ Dependencies correctly specified in package metadata
-
-3. **Install the package (on the target system):**
+The project uses a `Makefile` to simplify the build process:
 
 ```bash
-sudo dpkg -i ../wispr-lite_*.deb
-sudo apt-get install -f  # Fix any dependency issues
-
-No additional pip steps are required after installation.
+# Build the .deb package
+make deb
 ```
+
+This will:
+1. Verify all required `debian/` files exist
+2. Run `dpkg-buildpackage` with correct flags
+3. Generate `.deb` file in parent directory (e.g., `../wispr-lite_0.1.0_all.deb`)
+
+### Required Debian Files
+
+Ensure these files exist in `debian/` directory:
+
+- `debian/changelog` - Package version history
+- `debian/control` - Package metadata and dependencies
+- `debian/compat` - Debhelper compatibility level
+- `debian/rules` - Build rules
+- `debian/install` - File installation manifest
+
+### Installing the Package
+
+On the target system:
+
+```bash
+# Install package
+sudo dpkg -i ../wispr-lite_*.deb
+
+# Fix any dependency issues
+sudo apt-get install -f
+```
+
+No additional pip steps are required after installation—the .deb includes a bundled virtualenv.
 
 ### Testing the Package
 
@@ -64,26 +74,55 @@ sudo dpkg -i ../wispr-lite_*.deb
 which wispr-lite
 wispr-lite --help
 
+# Test basic functionality
+wispr-lite --version
+
 # Remove
 sudo apt remove wispr-lite
 ```
 
-## User-Level Installation (Alternative)
+### Package Contents
 
-For users who don't want system-wide installation:
+The .deb package includes:
+
+- **Executable**: `/usr/bin/wispr-lite`
+- **Desktop launcher**: `/usr/share/applications/wispr-lite.desktop`
+- **Icons**: `/usr/share/icons/hicolor/scalable/apps/wispr-lite*.svg`
+- **Documentation**: README.md and CONFIG.md
+- **Bundled virtualenv**: All Python dependencies included
+
+## User-Level Installation
+
+For users who don't want system-wide installation or don't have sudo access:
 
 ```bash
 bash scripts/install.sh
 ```
 
-This creates a venv in `~/.local/share/wispr-lite`.
+This will:
+- Create a venv in `~/.local/share/wispr-lite`
+- Install all dependencies
+- Create symlink in `~/.local/bin/wispr-lite`
+- Install icons to `~/.local/share/icons/`
+- Install desktop launcher to `~/.local/share/applications/`
+
+### Uninstall
+
+```bash
+bash scripts/uninstall.sh
+```
+
+Options:
+- Remove application and virtual environment
+- Optionally remove user configuration (`~/.config/wispr-lite/`)
+- Optionally remove cache (`~/.cache/wispr-lite/`)
 
 ## Model Preloading
 
-For offline/air-gapped installations:
+For offline or air-gapped installations:
 
 ```bash
-# Preload base model (default)
+# Preload default (base) model
 bash scripts/preload_models.sh
 
 # Preload specific models
@@ -92,52 +131,126 @@ bash scripts/preload_models.sh tiny base small
 # Models are cached in ~/.cache/wispr-lite/models
 ```
 
-The script:
+The preload script:
 - Shows license notice before download
-- Verifies model integrity
+- Verifies model integrity (SHA256 checksums)
 - Supports resume on interrupted downloads
 - Works offline if models already cached
 
 ## Icon Installation
 
+### Icon Files
+
 Icons should be placed in `wispr_lite/ui/icons/`:
 
-- `wispr-lite-idle.svg`
-- `wispr-lite-listening.svg`
-- `wispr-lite-processing.svg`
-- `wispr-lite-muted.svg`
-- `wispr-lite-error.svg`
+- `wispr-lite-idle.svg` - Gray microphone (idle state)
+- `wispr-lite-listening.svg` - Blue microphone (recording)
+- `wispr-lite-processing.svg` - Orange microphone (transcribing)
+- `wispr-lite-muted.svg` - Microphone with slash (muted)
+- `wispr-lite-error.svg` - Red microphone (error state)
 
-During package build, icons are installed to:
-- `/usr/share/icons/hicolor/scalable/apps/` (system)
-- `~/.local/share/icons/hicolor/scalable/apps/` (user)
+### Installation Paths
+
+**System-wide (.deb package)**:
+```bash
+/usr/share/icons/hicolor/scalable/apps/
+```
+
+**User-level**:
+```bash
+~/.local/share/icons/hicolor/scalable/apps/
+```
+
+### Icon Cache Update
+
+After installing icons:
+
+```bash
+# System-wide
+sudo gtk-update-icon-cache /usr/share/icons/hicolor
+
+# User-level
+gtk-update-icon-cache ~/.local/share/icons/hicolor
+```
+
+### Base Icon Alias
+
+Create an alias for desktop file compatibility:
+
+```bash
+cp wispr-lite-idle.svg wispr-lite.svg
+```
 
 ## Dependencies
 
-### Runtime Dependencies
+### Runtime Dependencies (System)
 
-Defined in `debian/control`:
-- python3 (>= 3.10)
-- python3-gi
-- gir1.2-gtk-3.0
-- gir1.2-ayatanaappindicator3-0.1
-- gir1.2-notify-0.7
-- xclip
-- libportaudio2
+Defined in `debian/control` and checked by `scripts/install.sh`:
+
+- `python3` (>= 3.10)
+- `python3-gi` - PyGObject bindings
+- `gir1.2-gtk-3.0` - GTK 3
+- `gir1.2-ayatanaappindicator3-0.1` - System tray (AppIndicator)
+- `gir1.2-notify-0.7` - Desktop notifications
+- `xclip` - Clipboard access
+- `libportaudio2` - Audio I/O
 
 ### Python Dependencies
 
-Installed via pip during setup:
-- faster-whisper
-- sounddevice
-- webrtcvad
-- pynput
-- python-xlib
-- PyYAML
-- numpy
-- dbus-python
+Installed via pip during setup (see `pyproject.toml`):
 
-See `pyproject.toml` for pinned versions.
+- `faster-whisper` - Whisper ASR backend
+- `sounddevice` - Audio capture
+- `webrtcvad` - Voice activity detection
+- `pynput` - Global hotkeys
+- `python-xlib` - X11 integration (optional)
+- `PyYAML` - Configuration
+- `numpy` - Array processing
+- `dbus-python` - D-Bus service
+
+### Build Dependencies
+
+Required for building .deb packages:
+
+- `dpkg-dev`
+- `debhelper`
+- `dh-python`
+- `dh-virtualenv`
+- `python3-all`
+- `python3-setuptools`
+- `pybuild-plugin-pyproject`
+
+## Version Management
+
+Version is defined in multiple files—keep them synchronized:
+
+1. **wispr_lite/__init__.py**
+   ```python
+   __version__ = "0.1.0"
+   ```
+
+2. **pyproject.toml**
+   ```toml
+   [project]
+   version = "0.1.0"
+   ```
+
+3. **debian/changelog**
+   ```
+   wispr-lite (0.1.0) unstable; urgency=low
+   ```
+
+### Updating Version
+
+When releasing a new version:
+
+1. Update all three files above
+2. Update `CHANGELOG.md` with new version
+3. Tag the commit:
+   ```bash
+   git tag -a v0.1.0 -m "Release version 0.1.0"
+   git push origin v0.1.0
+   ```
 
 ## Makefile Targets
 
@@ -151,182 +264,155 @@ make clean
 # Install development version
 make dev
 
-# Run tests before packaging
+# Run tests
 make test
+
+# Run linting
+make lint
+
+# Run application from source
+make run
 ```
 
 ## Flatpak (Future)
 
-Flatpak packaging is planned but not yet implemented. Challenges:
-- Portal access for global hotkeys
-- Audio device access
-- Clipboard access
+Flatpak packaging is planned but not yet implemented.
 
-See issue tracker for Flatpak progress.
+### Challenges
+
+- Portal access for global hotkeys
+- Audio device access via PipeWire
+- Clipboard access restrictions
+- D-Bus service registration
+
+### Progress
+
+Track Flatpak progress in [GitHub Issues](https://github.com/dosment/wispr-lite/issues).
 
 ## Troubleshooting
 
-### Build fails with missing dependencies
+### Build Fails with Missing Dependencies
+
+Install build dependencies:
 
 ```bash
 sudo apt-get build-dep .
 ```
 
-### Package conflicts
+Or install manually:
+
+```bash
+sudo apt install dpkg-dev debhelper dh-python dh-virtualenv \
+    python3-all python3-setuptools pybuild-plugin-pyproject
+```
+
+### Package Conflicts
+
+Remove existing installation:
 
 ```bash
 sudo apt remove wispr-lite
 sudo apt autoremove
 ```
 
-### Icons not showing
+### Icons Not Showing
+
+Update icon cache:
 
 ```bash
-sudo update-icon-caches /usr/share/icons/hicolor
-# or for user install:
+# System-wide
+sudo gtk-update-icon-cache /usr/share/icons/hicolor
+
+# User-level
 gtk-update-icon-cache ~/.local/share/icons/hicolor
+
+# Verify icons exist
+ls /usr/share/icons/hicolor/scalable/apps/wispr-lite*.svg
 ```
 
-## Version Management
+### Virtualenv Issues in .deb
 
-Version is defined in:
-- `wispr_lite/__init__.py`
-- `pyproject.toml`
-- `debian/changelog` (auto-generated)
+If building .deb with `dh-virtualenv` fails:
 
-Keep these synchronized when releasing.
+1. Ensure `dh-virtualenv` is installed:
+   ```bash
+   sudo apt install dh-virtualenv
+   ```
 
-## Mint QA Checklist (Manual Verification)
+2. Check `pyproject.toml` doesn't conflict with system packages
 
-Use this checklist to verify the `.deb` on Linux Mint before flipping Go/No‑Go to Go. Copy this block into the bottom of this file with your results.
+3. Review build logs in `debian/` directory
 
-Environment
-- Mint version (e.g., 21.3/22):
-- Cinnamon version:
-- Kernel version:
-- Session type (Xorg/Wayland):
+### Python Dependency Conflicts
 
-Build
-- Commands run:
-  ```bash
-  sudo apt install dpkg-dev debhelper dh-python python3-all python3-setuptools
-  make deb
-  ```
-- Build result (.deb path):
+If pip dependencies conflict with system packages:
 
-Install
-- Commands run:
-  ```bash
-  sudo dpkg -i ../wispr-lite_*.deb
-  sudo apt-get install -f
-  ```
-- Install result (success/notes):
+1. Use `--system-site-packages` for venv
+2. Exclude conflicting packages from `pyproject.toml`
+3. Install system packages via apt:
+   ```bash
+   sudo apt install python3-gi python3-dbus
+   ```
 
-Post‑install verification
-- Binary on PATH: `which wispr-lite` →
-- Menu entry appears under Utility/Accessibility (Yes/No):
-- Tray icon renders (state changes idle/listening/processing) (Yes/No):
-- CLI control (daemon running):
-  ```bash
-  wispr-lite --help        # exit 0
-  wispr-lite --mode command  # exit 0
-  wispr-lite --toggle        # exit 0 (toggle twice to restore)
-  ```
-- First‑run model consent:
-  - Consent dialog appears when model missing (Yes/No)
-  - Single progress toast shows and updates; "Model Ready" on success (Yes/No)
-- Hotkeys:
-  - PTT (Ctrl+Super) works (Yes/No)
-  - Toggle (Ctrl+Shift+Super) works (Yes/No)
-  - One‑time conflict warning (if applicable) (Yes/No)
-- Dictation:
-  - Overlay appears and does not steal focus (Yes/No)
-  - Speech transcribed and inserted into focused app (Yes/No)
-- Undo:
-  - Works with XLib (Yes/No)
-  - Falls back to xdotool if XLib unavailable (Yes/No)
-  - One‑time warning if neither available (Yes/No)
-- Accessibility (spot‑check with screen reader):
-  - Overlay labels read (state, transcript) (Yes/No)
-  - Tray menu items have names/descriptions (Yes/No)
+## Quality Assurance
 
-Uninstall
-- Commands run:
-  ```bash
-  sudo dpkg -r wispr-lite
-  sudo gtk-update-icon-cache /usr/share/icons/hicolor || true
-  ```
-- Menu entry removed; icons cleared (Yes/No):
+### Testing Checklist
 
-Notes & Issues
-- Observations / logs: `~/.local/state/wispr-lite/logs/wispr-lite.log`
-- Known deviations:
+Before releasing a package, verify:
 
----
+- [ ] Package builds successfully
+- [ ] Installation completes without errors
+- [ ] Binary is on PATH (`which wispr-lite`)
+- [ ] Desktop launcher appears in application menu
+- [ ] Icons display correctly in tray
+- [ ] Hotkeys work (PTT and toggle)
+- [ ] Dictation works in test applications
+- [ ] Preferences window opens and saves settings
+- [ ] Model download consent works
+- [ ] CLI commands work (`--toggle`, `--start`, `--stop`)
+- [ ] Logs are created and accessible
+- [ ] Uninstallation removes all files cleanly
 
-## QA Results - Linux Mint 22.2 (2025-10-06)
+### Test Environment
 
-**Environment**
-- Mint version: 22.2 (Zara)
-- Cinnamon version: 6.4.8
-- Kernel version: 6.14.0-33-generic
-- Session type: X11 (Xorg)
+Test on clean Linux Mint installation:
 
-**Build**
-- Commands run:
-  ```bash
-  # Build dependencies already installed
-  make clean
-  make deb
-  ```
-- Build result: `../wispr-lite_1.0.0_all.deb` (existing from previous build on 2025-10-05)
-- Note: .deb build attempted but failed due to missing `dh-virtualenv` dependency (requires sudo to install)
+- Linux Mint 21.3 (Virginia) or 22 (Wilma)
+- Cinnamon desktop
+- Xorg session
+- Fresh user account (no existing config)
 
-**Install Method Used**
-- Method: User-level venv installation (alternative to .deb)
-- Commands run:
-  ```bash
-  # Install system dependencies
-  sudo apt-get install python3-gi python3-cairo python3-dbus libportaudio2 xclip
+### Reporting Issues
 
-  # Create venv with system site packages
-  rm -rf ~/.local/share/wispr-lite/venv
-  python3 -m venv --system-site-packages ~/.local/share/wispr-lite/venv
-  source ~/.local/share/wispr-lite/venv/bin/activate
+Document test results with:
 
-  # Install Python dependencies (excluding system packages)
-  pip install -r requirements-user-install.txt
-  pip install -e .
+- OS and Cinnamon versions
+- Session type (Xorg/Wayland)
+- Installation method (.deb or user-level)
+- Any errors or warnings
+- Relevant logs from `~/.local/state/wispr-lite/logs/`
 
-  # Create symlink and install icons/desktop file
-  ln -sf ~/.local/share/wispr-lite/venv/bin/wispr-lite ~/.local/bin/wispr-lite
-  cp wispr_lite/ui/icons/*.svg ~/.local/share/icons/hicolor/scalable/apps/
-  cp wispr-lite.desktop ~/.local/share/applications/
-  ```
-- Install result: **Success** - Application installs and runs
+## Distribution
 
-**Post-install Verification**
-- Binary on PATH: `which wispr-lite` → `/home/dan/.local/bin/wispr-lite` ✓
-- Binary executes: `wispr-lite --help` → Displays help text ✓
-- Icons installed: 6 SVG files in `~/.local/share/icons/hicolor/scalable/apps/` ✓
-- Desktop file: `~/.local/share/applications/wispr-lite.desktop` ✓
-- Tray icon renders: **Yes** - Icon appears in system tray (using Ayatana AppIndicator)
-- Tray menu functional: **Yes** - Right-click shows menu with all expected items
-- Application starts: **Yes** - No crashes, initialization completes successfully
-- Hotkey conflict warning: **N/A** - Changed default hotkeys from Ctrl+Space to Ctrl+Super to avoid ibus/fcitx conflicts
+### GitHub Releases
 
-**Known Issues**
-1. **Packaging**: .deb installation requires `dh-virtualenv` to be installed first, OR `pyproject.toml` needs modification to avoid pip-installing system packages (PyGObject, dbus-python)
-2. **Icon display**: Tray icon does not show custom microphone icons (shows generic icon instead) - icons are installed correctly but AppIndicator may not be finding them in user icon path
-3. **GTK warnings**: Minor GTK warnings on startup related to PreferencesWindow widget packing (non-critical)
+1. Create release on GitHub
+2. Attach .deb package as release asset
+3. Include CHANGELOG in release notes
+4. Tag with version number (e.g., `v0.1.0`)
 
-**Deviations from Standard .deb Install**
-- Used user-level venv installation instead of .deb due to missing build dependency
-- All functionality works identically to .deb installation
-- Icons in user directory (`~/.local/share/icons/`) instead of system (`/usr/share/icons/`)
+### Package Repositories
 
-**Recommendations**
-1. Fix `pyproject.toml` to use system packages for PyGObject and dbus-python (already done)
-2. Document that .deb building requires `sudo apt install dh-virtualenv`
-3. Consider installing icons to system path in .deb to ensure AppIndicator finds them
-4. Fix GTK PreferencesWindow widget packing warning
+Future options:
+
+- Submit to Ubuntu/Mint PPAs
+- Debian package repositories
+- Flatpak repository (Flathub)
+- Snap Store
+
+## References
+
+- [Debian Packaging Guide](https://www.debian.org/doc/manuals/maint-guide/)
+- [dh-virtualenv Documentation](https://dh-virtualenv.readthedocs.io/)
+- [Flatpak Documentation](https://docs.flatpak.org/)
+- [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)
