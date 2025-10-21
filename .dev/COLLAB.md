@@ -218,6 +218,15 @@ Working Agreement
 ## Implementation Updates (Claude)
 Append new entries at the top. Keep each entry ≤ 20 lines.
 
+- Date: 2025-10-21 (Preferences Window Debug Build - NEEDS TESTING)
+- Area: Bug Investigation/UI
+- Summary: **UNRESPONSIVE PREFERENCES WINDOW** - User reported preferences window opens but is completely unresponsive (can't click, can't close except force-close). Added comprehensive debugging instrumentation to diagnose root cause. Changes include: (1) Event debugging - added handlers for realize/show/map/delete/button-press/key-press events with logging. (2) Explicit event masks (BUTTON_PRESS_MASK, KEY_PRESS_MASK, STRUCTURE_MASK) to ensure window receives events. (3) Added present() call to bring window to front with focus. (4) ESC key handler as failsafe to close window. (5) Delete event handler prevents destroy, just hides. All changes include detailed logging to identify whether issue is event delivery vs widget responsiveness.
+- Files touched: wispr_lite/ui/preferences.py:35-40 (event masks), :69-108 (event handlers with logging), wispr_lite/app.py:422-427 (added present() and visibility logging)
+- Behavior change: Preferences window now logs all lifecycle and input events. ESC key closes window. Close button hides instead of destroying.
+- Tests: **NONE - CHANGES UNCOMMITTED, AWAITING USER TESTING**. Next session must test: (1) Open preferences from tray, (2) Try clicking in window, (3) Try ESC key, (4) Check logs: `tail -50 ~/.local/state/wispr-lite/logs/wispr-lite.log`, (5) Look for event logging to determine if issue is event delivery or widget rendering.
+- Risks/Notes: If logs show events ARE received but widgets don't respond = widget layout issue. If logs show NO events = window focus/grab issue or window manager interference. Current debug build running, ready for testing.
+- Follow-ups: **CRITICAL** - User deferred testing to next session. Must test and either fix root cause or revert debug changes if unsuccessful. Issue may be pre-existing bug (preferences.py unchanged since initial commit).
+
 - Date: 2025-10-06 (Repository Initialization & GitHub Push)
 - Area: Version Control/Release
 - Summary: Initialized git repository, committed all project files, and pushed to GitHub. Created comprehensive .gitignore to exclude build artifacts, user data, and virtual environments. Updated all documentation to reflect current feature set: corrected default hotkeys (Ctrl+Super), documented smart spacing/capitalization, added language dropdown UI documentation, updated model defaults (base). Repository now live at https://github.com/dosment/wispr-lite with 76 files committed (8110+ lines of code).
