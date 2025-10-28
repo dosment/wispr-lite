@@ -4,6 +4,7 @@ Provides cross-platform hotkey support for push-to-talk and toggle modes.
 """
 
 import threading
+import time
 from typing import Optional, Callable, Set
 from pynput import keyboard
 
@@ -30,6 +31,13 @@ class HotkeyManager:
         self.on_conflict_detected: Optional[Callable[[str], None]] = None
         self.hotkey_test_passed = False
         self.conflict_warning_shown = False
+
+        # Watchdog for listener health monitoring
+        self.last_event_time = time.time()
+        self.watchdog_timer: Optional[threading.Timer] = None
+        self.watchdog_enabled = True
+        self.restart_count = 0
+        self.max_restarts = 3
 
         # Callbacks
         self.on_push_to_talk_press: Optional[Callable] = None
@@ -121,6 +129,7 @@ class HotkeyManager:
         Args:
             key: Key that was pressed
         """
+        self.last_event_time = time.time()  # Update heartbeat
         self.currently_pressed.add(key)
 
         # Check for hotkey matches
@@ -148,6 +157,7 @@ class HotkeyManager:
         Args:
             key: Key that was released
         """
+        self.last_event_time = time.time()  # Update heartbeat
         if key in self.currently_pressed:
             self.currently_pressed.remove(key)
 
@@ -170,11 +180,16 @@ class HotkeyManager:
                 on_release=self._on_release
             )
             self.listener.start()
+            self.last_event_time = time.time()  # Reset heartbeat
             logger.info("Hotkey listener started")
 
             # Check for common conflicts after a short delay
             if not self.conflict_warning_shown:
                 threading.Timer(2.0, self._check_for_conflicts).start()
+
+            # Start watchdog to monitor listener health
+            if self.watchdog_enabled:
+                self._start_watchdog()
 
         except Exception as e:
             logger.error(f"Failed to start hotkey listener: {e}")
@@ -227,8 +242,86 @@ class HotkeyManager:
         """Mark hotkeys as working (called when first successful activation)."""
         self.hotkey_test_passed = True
 
+    def _start_watchdog(self) -> None:
+        """Start watchdog timer to monitor listener health."""
+        if self.watchdog_timer is not None:
+            self.watchdog_timer.cancel()
+
+        # Check listener health every 30 seconds
+        self.watchdog_timer = threading.Timer(30.0, self._check_listener_health)
+        self.watchdog_timer.daemon = True
+        self.watchdog_timer.start()
+        logger.debug("Watchdog timer started")
+
+    def _check_listener_health(self) -> None:
+        """Check if listener is still functional and restart if needed."""
+        if not self.listener or not self.watchdog_enabled:
+            return
+
+        try:
+            # Check if listener thread is still running
+            if not self.listener.running:
+                logger.warning("Hotkey listener stopped unexpectedly")
+                self._restart_listener()
+                return
+
+            # We can't easily detect silent failures without events, so just reschedule
+            # The main issue (accessibility settings changes) will be caught by normal operation
+            if self.watchdog_enabled:
+                self._start_watchdog()
+
+        except Exception as e:
+            logger.error(f"Watchdog check failed: {e}")
+            if self.watchdog_enabled:
+                self._start_watchdog()
+
+    def _restart_listener(self) -> None:
+        """Restart the hotkey listener after a failure."""
+        if self.restart_count >= self.max_restarts:
+            logger.error(f"Hotkey listener failed {self.max_restarts} times, giving up")
+            self.watchdog_enabled = False
+            return
+
+        self.restart_count += 1
+        logger.info(f"Attempting to restart hotkey listener (attempt {self.restart_count}/{self.max_restarts})")
+
+        try:
+            # Stop old listener
+            if self.listener:
+                try:
+                    self.listener.stop()
+                except:
+                    pass
+                self.listener = None
+
+            # Start new listener
+            self.currently_pressed.clear()
+            self.listener = keyboard.Listener(
+                on_press=self._on_press,
+                on_release=self._on_release
+            )
+            self.listener.start()
+            self.last_event_time = time.time()
+            logger.info("Hotkey listener restarted successfully")
+
+            # Restart watchdog
+            if self.watchdog_enabled:
+                self._start_watchdog()
+
+        except Exception as e:
+            logger.error(f"Failed to restart hotkey listener: {e}")
+            # Try again later
+            if self.watchdog_enabled:
+                self._start_watchdog()
+
     def stop(self) -> None:
         """Stop listening for hotkeys."""
+        # Stop watchdog first
+        self.watchdog_enabled = False
+        if self.watchdog_timer is not None:
+            self.watchdog_timer.cancel()
+            self.watchdog_timer = None
+
         if self.listener is not None:
             self.listener.stop()
             self.listener = None
