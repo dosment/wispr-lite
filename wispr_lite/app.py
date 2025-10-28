@@ -421,7 +421,10 @@ class WisprLiteApp:
 
     def open_preferences(self) -> None:
         """Open preferences window."""
+        logger.info("Opening preferences window")
         self.preferences.show_all()
+        self.preferences.present()  # Bring window to front and give focus
+        logger.info(f"Preferences window shown, visible: {self.preferences.get_visible()}, realized: {self.preferences.get_realized()}")
 
     def on_preferences_saved(self) -> None:
         """Handle preferences saved event."""

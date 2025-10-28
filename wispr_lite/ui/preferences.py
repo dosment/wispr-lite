@@ -5,7 +5,7 @@ Provides UI for editing settings without manual YAML editing.
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
+from gi.repository import Gtk, Gdk
 from typing import Optional, Callable
 
 from wispr_lite.logging import get_logger
@@ -31,6 +31,13 @@ class PreferencesWindow(Gtk.Window):
 
         self.set_default_size(600, 500)
         self.set_border_width(10)
+
+        # Ensure window can receive events
+        self.set_events(
+            Gdk.EventMask.BUTTON_PRESS_MASK |
+            Gdk.EventMask.KEY_PRESS_MASK |
+            Gdk.EventMask.STRUCTURE_MASK
+        )
 
         # Create notebook with tabs
         notebook = Gtk.Notebook()
@@ -66,7 +73,46 @@ class PreferencesWindow(Gtk.Window):
 
         self.add(main_box)
 
+        # Connect to window events for debugging
+        self.connect("realize", self._on_realize)
+        self.connect("show", self._on_show)
+        self.connect("map", self._on_map)
+        self.connect("delete-event", self._on_delete)
+        self.connect("button-press-event", self._on_button_press)
+        self.connect("key-press-event", self._on_key_press)
+
         logger.info("PreferencesWindow initialized")
+
+    def _on_realize(self, widget):
+        """Debug: window realized."""
+        logger.info("PreferencesWindow realized")
+
+    def _on_show(self, widget):
+        """Debug: window shown."""
+        logger.info("PreferencesWindow shown")
+
+    def _on_map(self, widget):
+        """Debug: window mapped."""
+        logger.info("PreferencesWindow mapped")
+
+    def _on_delete(self, widget, event):
+        """Debug: window delete event."""
+        logger.info("PreferencesWindow delete event received")
+        self.hide()
+        return True  # Prevent destroy, just hide
+
+    def _on_button_press(self, widget, event):
+        """Debug: button press event."""
+        logger.info(f"PreferencesWindow button press at ({event.x}, {event.y})")
+        return False  # Propagate event
+
+    def _on_key_press(self, widget, event):
+        """Debug: key press event."""
+        logger.info(f"PreferencesWindow key press: {event.keyval}")
+        if event.keyval == 65307:  # ESC key
+            self.hide()
+            return True
+        return False  # Propagate event
 
     def _create_general_tab(self) -> Gtk.Widget:
         """Create the General settings tab."""
