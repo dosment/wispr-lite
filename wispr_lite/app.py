@@ -23,6 +23,7 @@ from wispr_lite.ui.notifications import NotificationManager, Severity
 from wispr_lite.integration.typing import TextOutput
 from wispr_lite.integration.hotkeys import HotkeyManager
 from wispr_lite.integration.dbus import create_dbus_service
+from wispr_lite.integration.accessibility import AccessibilityManager
 from wispr_lite.commands.registry import CommandRegistry
 from wispr_lite.pipeline import AudioPipeline
 from wispr_lite.model_ui import show_model_consent_dialog, notify_model_download_progress
@@ -98,6 +99,9 @@ class WisprLiteApp:
 
         # D-Bus service
         self.dbus_service = create_dbus_service()
+
+        # Accessibility manager
+        self.accessibility_manager = AccessibilityManager()
 
         # Setup callbacks
         self._setup_callbacks()
@@ -464,6 +468,9 @@ class WisprLiteApp:
         """Run the application."""
         logger.info("Starting Wispr-Lite")
 
+        # Setup accessibility settings (disable Bounce Keys if needed)
+        self.accessibility_manager.setup()
+
         # Check Wayland and show notice to user
         from wispr_lite.integration.cinnamon import is_wayland, get_wayland_limitations
         if is_wayland():
@@ -506,6 +513,9 @@ class WisprLiteApp:
 
         # Stop hotkey listener
         self.hotkey_manager.stop()
+
+        # Restore accessibility settings
+        self.accessibility_manager.restore()
 
         # Unload ASR model
         self.asr_engine.unload()
